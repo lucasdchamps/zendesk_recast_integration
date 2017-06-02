@@ -8,6 +8,8 @@
   <!-- https://github.com/zendesk/zendesk_app_framework_sdk -->
   <script type="text/javascript" src="https://assets.zendesk.com/apps/sdk/2.0/zaf_sdk.js"></script>
   <script>
+    console.log('recast-integration loaded, initializeing ZAFClient');
+
     // Initialise the Zendesk JavaScript API client
     // https://developer.zendesk.com/apps/docs/apps-v2
     var client = ZAFClient.init();
@@ -16,6 +18,7 @@
     var botURL = 'https://run.recast.ai/mandre-insurance-bot-1';
 
     function converseWithRecast(chatKey, message) {
+      console.log('Sending message to Recast: ' + message);
       var xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function () {
         if (this.readyState != 4) return;
@@ -59,6 +62,11 @@
         var chatKey = messages[lastMessageId].channel;
 
         if (fallbackedChats[chatKey]) {
+          return;
+        }
+
+        // Another hack because the script is reloaded after a while... :(
+        if (message === 'Sorry I did not understand, an agent will take over to assist you.') {
           return;
         }
 
