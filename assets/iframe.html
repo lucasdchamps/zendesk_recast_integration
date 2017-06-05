@@ -8,7 +8,7 @@
   <!-- https://github.com/zendesk/zendesk_app_framework_sdk -->
   <script type="text/javascript" src="https://assets.zendesk.com/apps/sdk/2.0/zaf_sdk.js"></script>
   <script>
-    console.log('recast-integration loaded, initializeing ZAFClient');
+    console.log('recast-integration loaded, initializing ZAFClient');
 
     // Initialise the Zendesk JavaScript API client
     // https://developer.zendesk.com/apps/docs/apps-v2
@@ -26,7 +26,6 @@
         if (this.status == 200) {
           var data = JSON.parse(this.responseText);
           var reply = data.reply.content;
-          console.log('Reply: ' + reply);
 
           if (reply == 'TODO') {
             fallbackedChats[chatKey] = true;
@@ -44,32 +43,24 @@
     }
 
     function messageReceivedHook() {
-      console.log('Message received!!!');
+      console.log('Message received');
       client.get('chat.messages').then(function(data) {
         var messages = data['chat.messages'];
+        messages.sort(function(a, b) { return a.ts - b.ts });
         var lastMessageId = messages.length - 1;
-        while (messages[lastMessageId].message === undefined) {
-          lastMessageId = lastMessageId - 1;
-        }
+        while (messages[lastMessageId].message === undefined) lastMessageId = lastMessageId - 1;
+
+        // We only treat new messages from visitors
+        if (messages[lastMessageId].nick.split(':')[0] !== 'visitor') return;
 
         // Ugly hack because the channel.message.received hook gets registered several times...
-        if (doneMessageIds[lastMessageId]) {
-          return;
-        }
+        if (doneMessageIds[lastMessageId]) return;
         doneMessageIds[lastMessageId] = true;
 
         var message = messages[lastMessageId].message;
         var chatKey = messages[lastMessageId].channel;
 
-        if (fallbackedChats[chatKey]) {
-          return;
-        }
-
-        // Another hack because the script is reloaded after a while... :(
-        if (message === 'Sorry I did not understand, an agent will take over to assist you.') {
-          return;
-        }
-
+        if (fallbackedChats[chatKey]) return;
         converseWithRecast(chatKey, message);
       });
     }
