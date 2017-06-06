@@ -15,7 +15,25 @@
     var client = ZAFClient.init();
     var fallbackedChats = {};
     var doneMessageIds = {};
-    var botURL = 'https://run.recast.ai/mandre-insurance-bot-1';
+    var botURL = null;
+
+    // Set botURL
+    client.request('/api/v2/users.json').then(function(data) {
+      var users = data.users;
+      for (var i = 0; i < users.length; i++) {
+        console.log(users[i].role);
+        if (users[i].role === 'admin') {
+          botURL = users[i].user_fields.bot;
+          break;
+        }
+      }
+
+      if (botURL !== null) {
+        console.log('conversing with: ' + botURL);
+        client.on('channel.message.received', messageReceivedHook);
+        client.on('channel.chat.start', messageReceivedHook);
+      }
+    });
 
     function converseWithRecast(chatKey, message) {
       console.log('Sending message to Recast: ' + message);
@@ -64,9 +82,6 @@
         converseWithRecast(chatKey, message);
       });
     }
-
-    client.on('channel.message.received', messageReceivedHook);
-    client.on('channel.chat.start', messageReceivedHook);
   </script>
 </body>
 </html>
