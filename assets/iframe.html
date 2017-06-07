@@ -18,21 +18,23 @@
     var botURL = null;
 
     // Set botURL
-    client.request('/api/v2/users.json').then(function(data) {
-      var users = data.users;
-      for (var i = 0; i < users.length; i++) {
-        console.log(users[i].role);
-        if (users[i].role === 'admin') {
-          botURL = users[i].user_fields.bot;
-          break;
+    client.get('currentUser.id').then(function(userData) {
+      var id = parseInt(userData['currentUser.id']);
+      client.request('/api/v2/users.json').then(function(data) {
+        var users = data.users;
+        for (var i = 0; i < users.length; i++) {
+          if (users[i].role === 'admin' && users[i].id === id) {
+            botURL = users[i].user_fields.bot;
+            break;
+          }
         }
-      }
 
-      if (botURL !== null) {
-        console.log('conversing with: ' + botURL);
-        client.on('channel.message.received', messageReceivedHook);
-        client.on('channel.chat.start', messageReceivedHook);
-      }
+        if (botURL !== null) {
+          console.log('conversing with: ' + botURL);
+          client.on('channel.message.received', messageReceivedHook);
+          client.on('channel.chat.start', messageReceivedHook);
+        }
+      });
     });
 
     function converseWithRecast(chatKey, message) {
