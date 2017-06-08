@@ -15,6 +15,7 @@
     var client = ZAFClient.init();
     var fallbackedChats = {};
     var doneMessageIds = {};
+    var messageId = null;
     var botURL = null;
 
     // Set botURL
@@ -32,12 +33,12 @@
         if (botURL !== null) {
           console.log('conversing with: ' + botURL);
           client.on('channel.message.received', messageReceivedHook);
-          client.on('channel.chat.start', messageReceivedHook);
+          client.on('channel.chat.start', function() { messageReceivedHook('chat.start') });
         }
       });
     });
 
-    function converseWithRecast(chatKey, message) {
+    function converseWithRecast(chatKey, messageId, message) {
       console.log('Sending message to Recast: ' + message);
       var xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function () {
@@ -59,10 +60,10 @@
 
       xhr.open('POST', botURL, true);
       xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.send(JSON.stringify({language: 'en', text: message}));
+      xhr.send(JSON.stringify({messageId: messageId, text: message}));
     }
 
-    function messageReceivedHook() {
+    function messageReceivedHook(_event) {
       console.log('Message received');
       client.get('chat.messages').then(function(data) {
         var messages = data['chat.messages'];
@@ -81,7 +82,10 @@
         var chatKey = messages[lastMessageId].channel;
 
         if (fallbackedChats[chatKey]) return;
-        converseWithRecast(chatKey, message);
+
+        if (_event === 'chat.start') messageId = chatKey + Math.random().toString(36).substring(2);
+
+        converseWithRecast(chatKey, messageId, message);
       });
     }
   </script>
