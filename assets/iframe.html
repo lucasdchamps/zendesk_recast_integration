@@ -48,10 +48,8 @@
           var data = JSON.parse(this.responseText);
           var reply = data.reply.content;
 
-          if (reply == 'TODO') {
+          if (reply.startsWith('Sorry I did not understand') || reply.startsWith("Désolé, je n'ai pas compris")) {
             fallbackedChats[chatKey] = true;
-            client.invoke('chat.sendChat', 'Sorry I did not understand, an agent will take over to assist you.');
-            return;
           }
 
           client.invoke('chat.sendChat', reply);
